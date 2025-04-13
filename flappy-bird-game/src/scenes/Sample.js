@@ -20,7 +20,7 @@ export class Sample extends Scene
         this.pipe_width = 60;
         this.pipe_height = 1000;
 
-        this.pipes = [];
+        this.pipes = null;
     }
 
     init() 
@@ -37,6 +37,8 @@ export class Sample extends Scene
 
     create()
     {
+        this.pipes = this.physics.add.group();
+
         this.sky = this.add.image(this.initialBirdPosition.x, this.initialBirdPosition.y, 'sky');
         let scaleX = this.cameras.main.width / this.sky.width
         let scaleY = this.cameras.main.height / this.sky.height
@@ -95,16 +97,10 @@ export class Sample extends Scene
         const upper_pipe_y = pipeVerticalPosition;
         const upper_pipe_deg = 0; // -.2;
 
-        const upper_pipe = this.add.sprite(upper_pipe_x, upper_pipe_y, 'pipe');
+        const upper_pipe = this.pipes.create(upper_pipe_x, upper_pipe_y, 'pipe');
         upper_pipe.rotation += upper_pipe_deg;
         upper_pipe.setOrigin(0, 1);
 
-        const upper_pipe_border = this.add.rectangle(upper_pipe_x, upper_pipe_y, this.pipe_width, this.pipe_height);
-        upper_pipe_border.setOrigin(0, 1);
-        upper_pipe_border.setStrokeStyle(5, 0x000000);
-        upper_pipe_border.setRotation(upper_pipe_deg);
-
-        this.pipes.push([upper_pipe, upper_pipe_border]);
         return upper_pipe;
     }
 
@@ -114,26 +110,16 @@ export class Sample extends Scene
         const lower_pipe_y = pipeVerticalDistance;
         const lower_pipe_deg = 0; // -.5;
 
-        const lower_pipe = this.add.sprite(lower_pipe_x, lower_pipe_y, 'pipe');
+        const lower_pipe = this.pipes.create(lower_pipe_x, lower_pipe_y, 'pipe');
         lower_pipe.rotation += lower_pipe_deg;
         lower_pipe.setOrigin(0);
 
-        const lower_pipe_border = this.add.rectangle(lower_pipe_x, lower_pipe_y, this.pipe_width, this.pipe_height);
-        lower_pipe_border.setOrigin(0);
-        lower_pipe_border.setStrokeStyle(5, 0x000000)
-        lower_pipe_border.setRotation(lower_pipe_deg);
-
-        this.pipes.push([lower_pipe, lower_pipe_border]);
         return lower_pipe;
     }
 
     movePipe() 
     {
-        const speed = -3;
-        for (let i = 0; i < this.pipes.length; i++)
-        {
-            this.pipes[i][0].x += speed;
-            this.pipes[i][1].x += speed;
-        }
+        const speed = -200;
+        this.pipes.setVelocityX(speed);
     }
 }
