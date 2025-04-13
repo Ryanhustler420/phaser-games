@@ -6,23 +6,21 @@ export class Sample extends Scene
     constructor()
     {
         super("Sample");
-        this.VELOCITY = 200;
-
-        this.upper_pipe = null;
-        this.upper_pipe_border = null;
-
-        this.lower_pipe = null;
-        this.lower_pipe_border = null;
+        this.VELOCITY = 250;
+        this.PIPES_TO_RENDER = 40;
 
         this.pipeVerticalDistanceRange = [150, 250];
-        this.pipeVerticalDistance = Phaser.Math.Between(...this.pipeVerticalDistanceRange);
-        this.pipeVerticalPosition = Phaser.Math.Between(0 + 20, 768 - 20 - this.pipeVerticalDistance);
+        this.pipeHorizontalDistance = 400;
 
         this.bird = null;
         this.sky = null;
         this.totalDelta = null;
-        this.flapVelocity = 300;
+        this.flapVelocity = 200;
         this.initialBirdPosition = { x: 1024/2, y: 768/2 };
+        this.pipe_width = 60;
+        this.pipe_height = 1000;
+
+        this.pipes = [];
     }
 
     init() 
@@ -32,9 +30,9 @@ export class Sample extends Scene
 
     preload() 
     {
-        this.load.image('sky', 'https://media.istockphoto.com/id/182493016/photo/sky-and-grass-backround.jpg?s=612x612&w=0&k=20&c=u9Hk93MPbXqjOTTEFNGMq7JJJ46HDBlnqiG7dvrbu9w=')
+        this.load.image('sky', 'https://plus.unsplash.com/premium_photo-1686050878751-89499d28d153?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8c3RhciUyMGdhemluZ3xlbnwwfHwwfHx8MA%3D%3D')
         this.load.image('bird', 'https://static.vecteezy.com/system/resources/thumbnails/048/880/982/small_2x/happy-cute-bird-image-cartoon-style-png.png');
-        this.load.image('pipe', 'https://placehold.co/60x480')
+        this.load.image('pipe', `https://placehold.co/${this.pipe_width}x${this.pipe_height}`);
     }
 
     create()
@@ -50,8 +48,17 @@ export class Sample extends Scene
         this.bird.setScale(.2).setScrollFactor(0);
         this.bird.setOrigin(.5);
         this.bird.body.gravity.y = 400;
-        
-        // code here...
+
+        for (let i = 0; i < this.PIPES_TO_RENDER; i++)
+        {
+            this.pipeHorizontalDistance += 400;
+
+            const pipeVerticalDistance = Phaser.Math.Between(...this.pipeVerticalDistanceRange);
+            const pipeVerticalPosition = Phaser.Math.Between(0 + 20, 768 - 20 - pipeVerticalDistance);
+
+            const upper_pipe = this.renderUpperPipe(this.pipeHorizontalDistance, pipeVerticalPosition);
+            const lower_pipe = this.renderLowerPipe(this.pipeHorizontalDistance, upper_pipe.y + pipeVerticalDistance);
+        }
 
         this.input.on('pointerdown', this.flap.bind(this));
         this.input.keyboard.on('keydown-SPACE', this.flap.bind(this));
@@ -63,6 +70,7 @@ export class Sample extends Scene
             this.restartBirdPosition();
             this.resetBirdGravity();
         }
+        this.movePipe();
     }
 
     resetBirdGravity()
@@ -81,46 +89,51 @@ export class Sample extends Scene
         this.bird.body.velocity.y = -this.flapVelocity;
     }
 
-    renderUpperPipe()
+    renderUpperPipe(x, pipeVerticalPosition)
     {
-        const upper_pipe_x = this.initialBirdPosition.x;
-        const upper_pipe_y = -this.initialBirdPosition.y + this.pipeVerticalDistance;
-        const upper_pipe_deg = -.2;
+        const upper_pipe_x = x;
+        const upper_pipe_y = pipeVerticalPosition;
+        const upper_pipe_deg = 0; // -.2;
 
-        this.upper_pipe = this.add.sprite(upper_pipe_x, upper_pipe_y, 'pipe');
-        this.upper_pipe.rotation += upper_pipe_deg;
-        this.upper_pipe.setOrigin(0);
+        const upper_pipe = this.add.sprite(upper_pipe_x, upper_pipe_y, 'pipe');
+        upper_pipe.rotation += upper_pipe_deg;
+        upper_pipe.setOrigin(0, 1);
 
-        this.upper_pipe_border = this.add.rectangle(upper_pipe_x, upper_pipe_y, 60, 480);
-        this.upper_pipe_border.setOrigin(0);
-        this.upper_pipe_border.setStrokeStyle(5, 0x000000);
-        this.upper_pipe_border.setRotation(upper_pipe_deg);
+        const upper_pipe_border = this.add.rectangle(upper_pipe_x, upper_pipe_y, this.pipe_width, this.pipe_height);
+        upper_pipe_border.setOrigin(0, 1);
+        upper_pipe_border.setStrokeStyle(5, 0x000000);
+        upper_pipe_border.setRotation(upper_pipe_deg);
+
+        this.pipes.push([upper_pipe, upper_pipe_border]);
+        return upper_pipe;
     }
 
-    renderLowerPipe()
+    renderLowerPipe(x, pipeVerticalDistance)
     {
-        const lower_pipe_x = this.initialBirdPosition.x;
-        const lower_pipe_y = this.initialBirdPosition.y + this.pipeVerticalDistance;
-        const lower_pipe_deg = -.5;
+        const lower_pipe_x = x;
+        const lower_pipe_y = pipeVerticalDistance;
+        const lower_pipe_deg = 0; // -.5;
 
-        this.lower_pipe = this.add.sprite(lower_pipe_x, lower_pipe_y, 'pipe');
-        this.lower_pipe.rotation += lower_pipe_deg;
-        this.lower_pipe.setOrigin(0);
+        const lower_pipe = this.add.sprite(lower_pipe_x, lower_pipe_y, 'pipe');
+        lower_pipe.rotation += lower_pipe_deg;
+        lower_pipe.setOrigin(0);
 
-        this.lower_pipe_border = this.add.rectangle(lower_pipe_x, lower_pipe_y, 60, 480);
-        this.lower_pipe_border.setOrigin(0);
-        this.lower_pipe_border.setStrokeStyle(5, 0x000000)
-        this.lower_pipe_border.setRotation(lower_pipe_deg);
+        const lower_pipe_border = this.add.rectangle(lower_pipe_x, lower_pipe_y, this.pipe_width, this.pipe_height);
+        lower_pipe_border.setOrigin(0);
+        lower_pipe_border.setStrokeStyle(5, 0x000000)
+        lower_pipe_border.setRotation(lower_pipe_deg);
+
+        this.pipes.push([lower_pipe, lower_pipe_border]);
+        return lower_pipe;
     }
 
     movePipe() 
     {
         const speed = -3;
-
-        this.lower_pipe.x += speed;
-        this.lower_pipe_border.x += speed;
-        
-        this.upper_pipe.x += speed;
-        this.upper_pipe_border.x += speed;
+        for (let i = 0; i < this.pipes.length; i++)
+        {
+            this.pipes[i][0].x += speed;
+            this.pipes[i][1].x += speed;
+        }
     }
 }
