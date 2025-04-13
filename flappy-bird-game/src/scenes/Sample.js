@@ -9,8 +9,8 @@ export class Sample extends Scene
         this.VELOCITY = 250;
         this.PIPES_TO_RENDER = 40;
 
+        this.pipeHorizontalDistanceRange = [500, 550];
         this.pipeVerticalDistanceRange = [150, 250];
-        this.pipeHorizontalDistance = 400;
 
         this.bird = null;
         this.sky = null;
@@ -51,16 +51,7 @@ export class Sample extends Scene
         this.bird.setOrigin(.5);
         this.bird.body.gravity.y = 400;
 
-        for (let i = 0; i < this.PIPES_TO_RENDER; i++)
-        {
-            this.pipeHorizontalDistance += 400;
-
-            const pipeVerticalDistance = Phaser.Math.Between(...this.pipeVerticalDistanceRange);
-            const pipeVerticalPosition = Phaser.Math.Between(0 + 20, 768 - 20 - pipeVerticalDistance);
-
-            const upper_pipe = this.renderUpperPipe(this.pipeHorizontalDistance, pipeVerticalPosition);
-            const lower_pipe = this.renderLowerPipe(this.pipeHorizontalDistance, upper_pipe.y + pipeVerticalDistance);
-        }
+        this.paint();
 
         this.input.on('pointerdown', this.flap.bind(this));
         this.input.keyboard.on('keydown-SPACE', this.flap.bind(this));
@@ -89,6 +80,30 @@ export class Sample extends Scene
     flap () 
     {
         this.bird.body.velocity.y = -this.flapVelocity;
+    }
+
+    paint()
+    {
+        for (let i = 0; i < this.PIPES_TO_RENDER; i++)
+        {
+            const pipeVerticalDistance = Phaser.Math.Between(...this.pipeVerticalDistanceRange);
+            const pipeHorizontalDistance = Phaser.Math.Between(...this.pipeHorizontalDistanceRange);
+            const pipeVerticalPosition = Phaser.Math.Between(0 + 20, 768 - 20 - pipeVerticalDistance);
+
+            const rightMostX = this.getRightMostPipe();
+            const upper_pipe = this.renderUpperPipe(rightMostX + pipeHorizontalDistance, pipeVerticalPosition);
+            const lower_pipe = this.renderLowerPipe(rightMostX + pipeHorizontalDistance, upper_pipe.y + pipeVerticalDistance);
+        }
+    }
+
+    getRightMostPipe() 
+    {
+        let rightMostX = 0;
+        this.pipes.getChildren().forEach(function (pipe) {
+            rightMostX = Math.max(pipe.x, rightMostX);
+        });
+
+        return rightMostX;
     }
 
     renderUpperPipe(x, pipeVerticalPosition)
